@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  # This service is still a stub (no business logic, no test suite yet -- see README). Until it
+  # has real code and a Makefile like resume-injections/resume-orchestrator/resume-embeddings,
+  # a successful Docker build is the meaningful check available: it catches a broken Dockerfile
+  # or missing dependency before it ever reaches the local dev environment.
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t resume-guard-rails .
+
+  # Only advances after build passes, and only on a real merge to main -- never on a PR.
+  promote:
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - run: git push origin HEAD:refs/heads/deployed --force
