@@ -10,19 +10,21 @@ permissions:
   contents: write
 
 jobs:
-  # This service is still a stub (no business logic, no test suite yet -- see README). Until it
-  # has real code and a Makefile like resume-injections/resume-orchestrator/resume-embeddings,
-  # a successful Docker build is the meaningful check available: it catches a broken Dockerfile
-  # or missing dependency before it ever reaches the local dev environment.
-  build:
+  validate-pipeline:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: docker build -t resume-guard-rails .
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: make validate-pipeline
 
-  # Only advances after build passes, and only on a real merge to main -- never on a PR.
+  # Only advances after validate-pipeline passes (unit tests + coverage >= 80%, see the Makefile),
+  # and only on a real merge to main -- never on a PR. auto-update.sh in resume-server tracks this
+  # branch (not main) for this repo, so the local dev environment only ever picks up commits that
+  # have actually passed CI.
   promote:
-    needs: build
+    needs: validate-pipeline
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
