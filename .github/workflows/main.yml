@@ -1,4 +1,4 @@
-name: CI
+name: resume-guard-rails CI
 
 on:
   push:
